@@ -23,7 +23,7 @@ public class firefly {
             double chaserX = Double.parseDouble(splitLine[1]);
             double chaserY = Double.parseDouble(splitLine[2]);
 
-            Coordinate chaser = new Coordinate(chaserX, chaserY);
+            Point chaser = new Point(chaserX, chaserY);
 
             if (range == 0 && chaserX == 0 && chaserY == 0) {
                 break;
@@ -39,7 +39,7 @@ public class firefly {
                 double fireflyX = Double.parseDouble(splitLine[0]);
                 double fireflyY = Double.parseDouble(splitLine[1]);
 
-                Coordinate firefly = new Coordinate(fireflyX, fireflyY);
+                Point firefly = new Point(fireflyX, fireflyY);
 
                 System.out.println(firefly);
 
@@ -47,49 +47,70 @@ public class firefly {
                     break;
                 }
 
-                if (!caught && canReach(chaser, firefly)) {
+                if (caught) {
+                    continue;
+                }
+
+                if (canChaserReachFireflyInNextTeleport(chaser, firefly, range)) {
                     caught = true;
                     System.out.println(String.format("Firefly %s caught at (%s,%s)",
                             fireflyNum, (int) firefly.x, (int) firefly.y));
+                    printWriter.println(String.format("Firefly %s caught at (%s,%s)",
+                            fireflyNum, (int) firefly.x, (int) firefly.y));
+
                 } else {
-                    // this part needs work
-                    double half = range / 2;
-                    chaser.x += half;
-                    chaser.y += half;
-//                    System.out.println(String.format("Moved to %s", chaser));
+                    chaser = findFurthestPointBetweenPointsInRange(chaser, firefly, range);
+                    System.out.println(String.format("Moved to %s", chaser));
                 }
             }
 
             if (!caught) {
                 System.out.println(String.format("Firefly %s not caught", fireflyNum));
+                printWriter.println(String.format("Firefly %s not caught", fireflyNum));
             }
         }
+
+        printWriter.close();
     }
 
-    private static boolean canReach(Coordinate chaser, Coordinate firefly) {
-        return distance(chaser, firefly) <= 1;
+    private static Point findFurthestPointBetweenPointsInRange(Point chaser, Point firefly, double range) {
+        double distance = calculateDistanceBetweenPoints(chaser, firefly);
+        double newX = chaser.x - (range * (chaser.x - firefly.x)) / distance;
+        double newY = chaser.y - (range * (chaser.y - firefly.y)) / distance;
+        Point newPoint = new Point(newX, newY);
+        return newPoint;
     }
 
-    private static double distance(Coordinate l, Coordinate r) {
-        double x = Math.pow(l.y - r.y, 2);
-        double y = Math.pow(l.x - r.x, 2);
-        double distance = Math.sqrt(x + y);
-//        System.out.println(String.format("Distance %s l1 %s r1 %s | l %s r %s", distance, x, y, l, r));
+    private static boolean canChaserReachFirefly(Point chaser, Point firefly) {
+        return calculateDistanceBetweenPoints(chaser, firefly) <= 1;
+    }
+
+    private static boolean canChaserReachFireflyInNextTeleport(Point chaser, Point firefly, double range) {
+        return calculateDistanceBetweenPoints(chaser, firefly) < range + 1;
+    }
+
+    private static double calculateDistanceBetweenPoints(Point a, Point b) {
+        double yDiff = a.y - b.y;
+        double xDiff = a.x - b.x;
+        double yDiffSquared = Math.pow(yDiff, 2);
+        double xDiffSquared = Math.pow(xDiff, 2);
+        double distance = Math.sqrt(yDiffSquared + xDiffSquared);
+//        System.out.println(String.format("Distance %s l1 %s r1 %s | a %s b %s", calculateDistanceBetweenPoints, yDiff, xDiff, a, b));
         return distance;
     }
 
-    public static class Coordinate {
+    public static class Point {
         double x;
         double y;
 
-        public Coordinate(double x, double y){
+        public Point(double x, double y){
             this.x = x;
             this.y = y;
         }
 
         @Override
         public String toString() {
-            return "Coordinate{" +
+            return "Point{" +
                     "x=" + x +
                     ", y=" + y +
                     '}';
